@@ -394,6 +394,10 @@ static struct wpa_bss * wpa_bss_add(struct wpa_supplicant *wpa_s,
 		wpa_s->conf->bss_max_count = wpa_s->num_bss + 1;
 	}
 
+	if (strncmp(wpa_ssid_txt(ssid, ssid_len), "NVRAM WARNING: Err =", strlen("NVRAM WARNING: Err =")) == 0) {
+	    return NULL;
+	}
+
 	dl_list_add_tail(&wpa_s->bss, &bss->list);
 	dl_list_add_tail(&wpa_s->bss_id, &bss->list_id);
 	wpa_s->num_bss++;
