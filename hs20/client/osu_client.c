@@ -2229,8 +2229,7 @@ static int cmd_osu_select(struct hs20_osu_client *ctx, const char *dir,
 		fprintf(f, "</table></a><br><small>BSSID: %s<br>\n"
 			"SSID: %s<br>\n",
 			last->bssid, last->osu_ssid);
-		if (last->osu_nai)
-			fprintf(f, "NAI: %s<br>\n", last->osu_nai);
+		fprintf(f, "NAI: %s<br>\n", last->osu_nai);
 		fprintf(f, "URL: %s<br>\n"
 			"methods:%s%s<br>\n"
 			"</small></p>\n",
@@ -2339,11 +2338,22 @@ static int cmd_signup(struct hs20_osu_client *ctx, int no_prod_assoc,
 		return -1;
 
 	snprintf(fname, sizeof(fname), "%s/osu-info", dir);
-	if (mkdir(fname, S_IRWXU | S_IRWXG) < 0 && errno != EEXIST) {
+	if (mkdir(fname, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH) < 0 &&
+	    errno != EEXIST) {
 		wpa_printf(MSG_INFO, "mkdir(%s) failed: %s",
 			   fname, strerror(errno));
 		return -1;
 	}
+
+#ifdef ANDROID
+	/* Allow processes running with Group ID as AID_WIFI
+	 * to read/write files from osu-info directory
+	 */
+	if (chown(fname, -1, AID_WIFI)) {
+		wpa_printf(MSG_INFO, "Could not chown osu-info directory: %s",
+			   strerror(errno));
+	}
+#endif /* ANDROID */
 
 	snprintf(buf, sizeof(buf), "SET osu_dir %s", fname);
 	if (wpa_command(ifname, buf) < 0) {
